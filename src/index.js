@@ -4,6 +4,7 @@ import fastifyCors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
 import usersController from "./routes/users-controller.js";
 import path from "path";
+import fs from 'fs';
 // import { OAuth2Client } from 'google-auth-library';
 
 // const googleClient = new OAuth2Client('188335469204-dff0bjf48ubspckenk92t6730ade1o0i.apps.googleusercontent.com');
@@ -53,7 +54,14 @@ fastify.get('/', async (req, res) => {
 });
 
 try {
-	fastify.listen({port: 3000, host: '0.0.0.0'})
+	fastify.listen({
+		port: 3000,
+		host: '0.0.0.0',
+		https: {
+		  key: fs.readFileSync('./key.pem'),
+		  cert: fs.readFileSync('./cert.pem')
+		}
+	  });
 } catch(err) {
 	fastify.log.error(err);
 	process.exit(1);
