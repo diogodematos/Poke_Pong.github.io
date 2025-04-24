@@ -23,6 +23,7 @@ const fastify = Fastify({
 const allowedOrigins = [
 	'http://10.11.243.25:8080',
 	'http://10.12.243.25:8080',
+	'https://diogodematos.github.io',
 	// adicionar mais se necessário
   ];
   
@@ -57,4 +58,3 @@ try {
 	fastify.log.error(err);
 	process.exit(1);
 }
-
