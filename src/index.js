@@ -25,21 +25,24 @@ const allowedOrigins = [
 	'http://10.11.243.25:8080',
 	'http://10.12.243.25:8080',
 	'https://diogodematos.github.io',
+	'https://pokeponggithubio-production.up.railway.app',
 	// adicionar mais se necessário
   ];
   
-fastify.register(fastifyCors, {
+  fastify.register(fastifyCors, {
 	origin: (origin, cb) => {
-		if (!origin) return cb(null, false);
-		if (allowedOrigins.includes(origin)) {
-			cb(null, true);
-		} else {
-			cb(new Error("Not allowed by CORS"));
-		}
+	  if (!origin) return cb(null, false);
+	  if (allowedOrigins.includes(origin)) {
+		cb(null, true);
+	  } else {
+		cb(new Error("Not allowed by CORS"));
+	  }
 	},
-	methods: ['GET', 'POST'],
+	methods: ['GET', 'POST', 'OPTIONS'], // Permitir OPTIONS que é comum em CORS
 	allowedHeaders: ['Content-Type', 'Authorization'],
-});
+	credentials: true, // Caso precise de cookies ou credenciais
+	preflight: true, // Permitir a requisição OPTIONS
+  });
 
 fastify.register(fastifyStatic, {
 	root: process.cwd(),  // Serve os arquivos da raiz do projeto
