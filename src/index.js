@@ -40,9 +40,10 @@ fastify.register(fastifyCors, {
 });
 
 fastify.register(fastifyStatic, {
-	root: path.join(process.cwd(), 'public'),
-	prefix: '/', // optional: default '/'
+	root: process.cwd(),  // Serve os arquivos da raiz do projeto
+	prefix: '/', // Opcional: mantém o prefixo '/'
 });
+  
 
 fastify.register(usersController, {prefix: '/users'});
 
