@@ -22,8 +22,6 @@ const fastify = Fastify({
 // });
 
 const allowedOrigins = [
-	'http://10.11.243.25:8080',
-	'http://10.12.243.25:8080',
 	'https://diogodematos.github.io',
 	'https://pokeponggithubio-production.up.railway.app',
 	// adicionar mais se necessário
