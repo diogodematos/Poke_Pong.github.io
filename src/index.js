@@ -29,6 +29,7 @@ const allowedOrigins = [
   
   fastify.register(fastifyCors, {
 	origin: (origin, cb) => {
+	  console.log('Origin:', origin); // Adicione um log para verificar a origem recebida
 	  if (!origin) return cb(null, false);
 	  if (allowedOrigins.includes(origin)) {
 		cb(null, true);
@@ -36,10 +37,10 @@ const allowedOrigins = [
 		cb(new Error("Not allowed by CORS"));
 	  }
 	},
-	methods: ['GET', 'POST', 'OPTIONS'], // Permitir OPTIONS que é comum em CORS
+	methods: ['GET', 'POST'], // Permitir OPTIONS que é comum em CORS
 	allowedHeaders: ['Content-Type', 'Authorization'],
-	credentials: true, // Caso precise de cookies ou credenciais
-	preflight: true, // Permitir a requisição OPTIONS
+	// credentials: false, // Caso precise de cookies ou credenciais
+	//preflight: true, // Permitir a requisição OPTIONS
   });
 
 fastify.register(fastifyStatic, {
