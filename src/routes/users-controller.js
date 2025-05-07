@@ -2,6 +2,9 @@ import db from '../db.js'
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
+import path from 'path';
+import pump from 'pump';
+import fs from 'fs';
 
 const googleClient = new OAuth2Client('188335469204-dff0bjf48ubspckenk92t6730ade1o0i.apps.googleusercontent.com');
 
@@ -30,25 +33,68 @@ const usersController = (fastify, options, done) => {
 		};
 	});
 	
+	
+	
+	// Código do handler para o upload
 	fastify.post('/register', async (req, res) => {
-		const { username, password, email } = req.body;
-		if (!username || !password || !email) {
-			return res.status(400).send({error: 'Missing fields'});
-		}
-		if (!passwordRegex.test(password)) {
-			return res.status(400).send({error: 'Password must be 7-20 characters long, contain at least one uppercase letter, one lowercase letter and one number'});
-		}
-		if (!emailRegex.test(email)) {			
-			return res.status(400).send({error: 'Email must be valid'});
-		}
 		try {
+			const parts = req.parts();
+			const userData = {};
+			let avatarFile;
+	
+			// Processa os dados recebidos
+			for await (const part of parts) {
+				if (part.file) {
+					avatarFile = part;
+					console.log(`Avatar recebido: ${part.filename}`);
+				} else {
+					userData[part.fieldname] = part.value;
+				}
+			}
+	
+			const { username, password, email } = userData;
+	
+			if (!username || !password || !email || !avatarFile) {
+				return res.status(400).send({ error: 'Missing fields' });
+			}
+		
+			if (!passwordRegex.test(password)) {
+				return res.status(400).send({ error: 'Password inválida' });
+			}
+	
+			if (!emailRegex.test(email)) {
+				return res.status(400).send({ error: 'Email inválido' });
+			}
+	
 			const hashedPassword = await argon2.hash(password);
-			const insertData = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)')
-			insertData.run(username, hashedPassword, email);
-			return {success: true, message: 'User registered'};
+	
+			// Salva o arquivo avatar
+			const avatarFilename = `${username}-${Date.now()}-${avatarFile.filename}`;
+			const avatarPath = path.join(process.cwd(),'public', 'uploads', avatarFilename);
+		
+			// Usa o pump para salvar o avatar
+			await new Promise((resolve, reject) => {
+				pump(avatarFile.file, fs.createWriteStream(avatarPath), (err) => {
+					if (err) return reject(err);
+					resolve();
+				});
+			});
+	
+			const avatarURL = `/uploads/${avatarFilename}`;
+			
+			const stmt = db.prepare("INSERT INTO users (username, password, email, avatar) VALUES (?, ?, ?, ?)");
+			  try {
+				const info = stmt.run(username, hashedPassword, email, avatarURL);
+				return res.send({ success: true, message: 'User registered' });
+			  } catch (err) {
+				console.error("Erro ao registrar usuário:", err);
+				return res.status(400).send({ error: 'Failed to register user' });
+			  }
+			  
 		} catch (error) {
-			return res.status(400).send({error: 'User or email already exists'});
-		};
+			console.error("Erro inesperado:", error);
+			return res.status(500).send({ error: 'Internal Server Error' });
+		}
 	});
 	
 	fastify.post('/login', async (req, res) => {
@@ -123,7 +169,8 @@ const usersController = (fastify, options, done) => {
 			}
 			return res.send({
 				username: user.username,
-				email: user.email
+				email: user.email,
+				avatar: user.avatar
 			});
 		} catch(error) {
 			return res.status(500).send({error: 'Internal server error'});
